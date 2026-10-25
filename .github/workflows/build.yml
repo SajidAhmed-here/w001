@@ -1,58 +1,40 @@
-name: Test Python Package
+name: Python package
 
 on:
   pull_request:
-    types: [opened, synchronize]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
-
+        python: ['3.7', '3.8', '3.9', '3.10']
     services:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          
+          POSTGRES_DB: testdb
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports: ['5432:5432']
       mysql:
         image: mysql:latest
         env:
-          MYSQL_ROOT_PASSWORD: test_password
-          MYSQL_DATABASE: test_db
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
+          MYSQL_DATABASE: test_testdb
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: password
+        ports: ['33306:3306']
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup Python
+        uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install testing tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install tox tox-gh-actions
-
-      - name: Run test suite
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip
+      - name: Install dependencies
+        run: python -m pip install tox tox-gh-actions
+      - name: Run tests
         run: tox
